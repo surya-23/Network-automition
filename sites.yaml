@@ -1,0 +1,50 @@
+-----
+
+
+hosts: webservers
+  become: yes
+
+  tasks:
+
+    - name: install latest version of nginx 
+      apt: name=nginx state=latest update_cache=yes
+
+    - name: start server nginx
+      service: name=nginx state=started
+
+    - name: install latest version of php 
+
+      apt: name=['php','php-fpm'] state=latest update_cache=yes
+    
+
+    - name: copying the  server configuration of nginx 
+      copy: src=./default dest=/etc/nginx/sites_available/
+
+
+    - name:  index file configuration
+      copy: src=index.php dest=/var/www/html/index.php
+
+     - name: restart nginx server
+      service: name=nginx state=restarted 
+  
+- hosts:  haproxy
+  become: yes
+  
+  vars:
+    haproxy_mode: http
+    haproxy_algorithm:  roundrobin
+    haproxy_backend_servers: backend_servers
+    haproxy_path: /etc/haproxy
+    
+        
+  tasks:
+
+
+    - name: Install HAProxy
+      apt: update_cache=yes name= haproxy state= present
+    
+    - name: Copy Configuration File of HAproxy
+      template: src=haproxy.cfg.j2 dest={{haproxy_path}}/haproxy.cfg
+        
+    - name: Start HAProxy
+      service: name=haproxy state=restarted
