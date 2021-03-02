@@ -1,0 +1,19 @@
+
+global
+
+ maxconn 500
+    
+frontend http80
+    bind *:80
+    timeout client 7000ms
+    mode {{ haproxy_mode }}
+    default_backend {{ haproxy_backend_servers }}
+
+backend {{ haproxy_backend_servers }}
+    timeout server 3000s
+    timeout connect 4000s
+    retries 3
+    mode {{ haproxy_mode }}
+{%  for server in groups['webservers'] %}
+    server {{ hostvars[server]['inventory_hostname'] }} {{ hostvars[server]['ansible_default_ipv4']['address']}}:80 check
+{% endfor %}
